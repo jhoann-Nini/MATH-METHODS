@@ -1,7 +1,0 @@
-numpy
-sympy
-matplotlib
-PyQt6
-pytest
-pandas
-reportlab

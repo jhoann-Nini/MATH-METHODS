@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VísiNum · Visualizador Interactivo de Métodos Numéricos</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        <link rel="stylesheet" href="src/css/style.css">
+    </style>
+</head>
+<body>
+
+<header class="app-header">
+    <div class="logo-area">
+        <div class="logo-icon">∫</div>
+        HexVisual·Métodos
+    </div>
+    <div class="header-meta">
+        <span class="topbar-badge">FACN · 2026-I</span>
+    </div>
+</header>
+
+<div class="dashboard-grid">
+
+    <div class="panel">
+        <div class="panel-header">
+            <div class="card-icon purple">
+                <svg viewBox="0 0 20 20" fill="none" stroke="#a78bfa" stroke-width="1.6" width="16" height="16">
+                    <path d="M3 17 L10 3 L17 17"/>
+                    <path d="M6 11 h8"/>
+                </svg>
+            </div>
+            <div>
+                <div class="panel-title">Ecuación Base</div>
+                <div class="panel-desc">Variables de control</div>
+            </div>
+        </div>
+
+        <div class="panel-body">
+            <div class="method-tabs">
+                <button class="tab-btn active">Bisección</button>
+                <button class="tab-btn">Newton-Raphson</button>
+            </div>
+
+            <div class="form-group">
+                <label>Función Matemática</label>
+                <div class="func-input-wrap has-prefix">
+                    <span class="func-prefix">f(x) =</span>
+                    <input type="text" id="inputFuncion" value="exp(-x) - x">
+                </div>
+                <span class="hint">Ej: x^3 - x - 2, sin(x)</span>
+            </div>
+
+            <div class="form-group">
+                <label>Intervalo de Búsqueda [a, b]</label>
+                <div class="input-row">
+                    <div class="func-input-wrap has-prefix">
+                        <span class="func-prefix">a =</span>
+                        <input type="number" id="inputA" value="0" step="0.1">
+                    </div>
+                    <div class="func-input-wrap has-prefix">
+                        <span class="func-prefix">b =</span>
+                        <input type="number" id="inputB" value="1" step="0.1">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Iteraciones Máximas</label>
+                <input type="number" id="inputMaxIter" value="25">
+            </div>
+
+            <div class="form-group">
+                <label>Tolerancia del Error</label>
+                <input type="number" id="inputTolerancia" value="0.0001" step="0.00001">
+            </div>
+
+            <div class="btn-row">
+                <button class="btn btn-primary" onclick="ejecutarBiseccion()">Calcular Raíz</button>
+                <button class="btn btn-secondary" onclick="reiniciarApp()">Reiniciar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header">
+            <div class="card-icon teal">
+                <svg viewBox="0 0 20 20" fill="none" stroke="#2dd4bf" stroke-width="1.6" width="16" height="16">
+                    <rect x="2" y="2" width="16" height="16" rx="2"/>
+                    <path d="M2 14 L6 9 L10 12 L14 6 L18 8"/>
+                </svg>
+            </div>
+            <div>
+                <div class="tituloGrafica" id="tituloGrafica" style="font-size:14px; font-weight:600;">Método de Bisección - Iteración —</div>
+                <div class="panel-desc">Visualización del confinamiento</div>
+            </div>
+        </div>
+
+        <div class="panel-body">
+            <div class="chart-container-actual">
+                <canvas id="graficoMetodos"></canvas>
+            </div>
+
+            <div class="iteration-controls">
+                <button class="iter-btn" onclick="cambiarIteracion(0)">⏮</button>
+                <button class="iter-btn" onclick="cambiarIteracion(indiceIteracionActual - 1)">⏴</button>
+                <button class="iter-btn play" id="btnPlay" onclick="conmutarReproduccion()">▶</button>
+                <button class="iter-btn" onclick="cambiarIteracion(indiceIteracionActual + 1)">⏵</button>
+                <button class="iter-btn" onclick="cambiarIteracion(historialIteraciones.length - 1)">⏭</button>
+                <span class="iter-label">Iteración:</span>
+                <span class="iter-counter" id="contadorIter">0 / 0</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header">
+            <div class="card-icon purple" style="background: rgba(45, 212, 191, 0.1); color: var(--teal)">📈</div>
+            <div>
+                <div class="panel-title">Tabla de Iteraciones</div>
+                <div class="panel-desc">Registro numérico paso a paso</div>
+            </div>
+        </div>
+
+        <div class="panel-body">
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Iter.</th>
+                        <th>a</th>
+                        <th>b</th>
+                        <th>c</th>
+                        <th>f(c)</th>
+                        <th>Error Abs.</th>
+                        <th>Error Rel. (%)</th>
+                    </tr>
+                    </thead>
+                    <tbody id="cuerpoTabla">
+                    <tr>
+                        <td colspan="7" style="text-align:center; padding:20px; color:var(--text-dim); border:none;">Sin datos calculados.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="stats-block">
+                <div class="stat-card-mini">
+                    <span class="stat-label-mini">Raíz Aprox.</span>
+                    <span class="stat-value-mini teal" id="resRaiz">—</span>
+                </div>
+                <div class="stat-card-mini">
+                    <span class="stat-label-mini">f(c)</span>
+                    <span class="stat-value-mini" id="resFc">—</span>
+                </div>
+                <div class="stat-card-mini">
+                    <span class="stat-label-mini">Iteraciones</span>
+                    <span class="stat-value-mini accent" id="resIter">—</span>
+                </div>
+                <div class="stat-card-mini">
+                    <span class="stat-label-mini">Estado</span>
+                    <div id="resEstado" style="margin-top:1px;">—</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script src="src/js/main.js"></script>
+</body>
+</html>
