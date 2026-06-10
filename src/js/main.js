@@ -1,3 +1,10 @@
+import Biseccion 
+from "./methods/Biseccion.js";
+
+
+import FunctionParser 
+from "./parser/FunctionParser.js";
+
 let miGrafico = null;
     let historialIteraciones = [];
     let indiceIteracionActual = -1;
@@ -110,48 +117,75 @@ let miGrafico = null;
         return puntos;
     }
 
-    function ejecutarBiseccion() {
+    function ejecutarBiseccion(){
         detenerReproduccion();
-        const expresion = document.getElementById('inputFuncion').value.trim();
-        let a = parseFloat(document.getElementById('inputA').value);
-        let b = parseFloat(document.getElementById('inputB').value);
-        const maxIter = parseInt(document.getElementById('inputMaxIter').value) || 25;
-        const tol = parseFloat(document.getElementById('inputTolerancia').value) || 0.0001;
 
-        if (isNaN(a) || isNaN(b) || !expresion) return;
+        const expresion =
+        document.getElementById(
+        "inputFuncion"
+        ).value;
 
-        let fa = math.evaluate(expresion, { x: a });
-        let fb = math.evaluate(expresion, { x: b });
-        if (fa * fb >= 0) { alert("f(a) y f(b) deben tener signos opuestos."); return; }
+        const a =
+        parseFloat(
+        document.getElementById(
+        "inputA"
+        ).value
+        );
 
-        historialIteraciones = [];
-        let cAnterior = 0;
+        const b =
+        parseFloat(
+        document.getElementById(
+        "inputB"
+        ).value
+        );
 
-        // Iteración 0
-        let c0 = (a + b) / 2;
-        let fc0 = math.evaluate(expresion, { x: c0 });
-        historialIteraciones.push({ n: 0, a, b, c: c0, fc: fc0, errAbs: null, errRel: null });
+        const maxIter =
+        parseInt(
+        document.getElementById(
+        "inputMaxIter"
+        ).value
+        );
 
-        if (fa * fc0 < 0) { b = c0; fb = fc0; } else { a = c0; fa = fc0; }
-        cAnterior = c0;
+        const tolerancia =
+        parseFloat(
+        document.getElementById(
+        "inputTolerancia"
+        ).value
+        );
 
-        // Siguientes iteraciones
-        for (let i = 1; i <= maxIter; i++) {
-            let c = (a + b) / 2;
-            let fc = math.evaluate(expresion, { x: c });
-            let errAbs = Math.abs(c - cAnterior);
-            let errRel = (c !== 0) ? (errAbs / Math.abs(c)) * 100 : 0;
+        try{
+        const funcion =
+        FunctionParser.crearFuncion(
+        expresion
+        );
 
-            historialIteraciones.push({ n: i, a, b, c, fc, errAbs, errRel });
+        const metodo =
+        new Biseccion(
+        funcion
+        );
 
-            if (errAbs < tol || Math.abs(fc) < 1e-12) break;
-
-            if (fa * fc < 0) { b = c; fb = fc; } else { a = c; fa = fc; }
-            cAnterior = c;
-        }
+        historialIteraciones =
+        metodo.resolver(
+        a,
+        b,
+        tolerancia,
+        maxIter
+        );
 
         renderizarHistorialUI();
-        cambiarIteracion(historialIteraciones.length - 1);
+
+        cambiarIteracion(
+        historialIteraciones.length-1
+        );
+
+        }catch(error){
+
+        alert(
+        error.message
+        );
+
+        }
+
     }
 
     function renderizarHistorialUI() {
@@ -268,3 +302,10 @@ let miGrafico = null;
     }
 
     window.onload = () => { inicializarGrafico(); ejecutarBiseccion(); };
+
+    
+//Exponer funciones globalmente para ser llamadas desde el HTML
+window.ejecutarBiseccion = ejecutarBiseccion;
+window.reiniciarApp = reiniciarApp;
+window.cambiarIteracion = cambiarIteracion;
+window.conmutarReproduccion = conmutarReproduccion;
